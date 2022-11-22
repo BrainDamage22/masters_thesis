@@ -1,34 +1,30 @@
-# Create a hundred random data nodes with 3 dimensions
+# Create X random vertices with w dimensions
 import csv
 import random
 from Classes import Node
 import math
 
-amount = 100
+amount = 50
 rangeX = 1000
 rangeY = 1000
-rangeZ = 1000
-path = '/Users/lukas/Documents/Stuff/'
+path = '/Users/lukas/Documents/Master Thesis/'
 
-fields = ["number", "X", "Y", "Z"]
+fields = ["Number", "X", "Y"]
 nodes = []
 
 for i in range(1, amount + 1):
     randX = random.randrange(1, rangeX)
     randY = random.randrange(1, rangeY)
-    randZ = random.randrange(1, rangeZ)
-    nodes.append(Node(i, randX, randY, randZ))
+    nodes.append(Node(i, randX, randY))
 
 with open(path + 'nodes.csv', 'w') as f:
-    # using csv.writer method from CSV package
     write = csv.writer(f)
     write.writerow(fields)
     for datapoint in nodes:
-        write.writerow([datapoint.number, datapoint.x, datapoint.y, datapoint.z])
+        write.writerow([datapoint.number, datapoint.x, datapoint.y])
 
 print("Data generation done")
 
-# Creating cost matrix between the nodes with Manhattan distance
 totalCosts_manhattan = []
 totalCosts_euclidean = []
 
@@ -36,13 +32,11 @@ for i in range(len(nodes)):
     costs_manhattan = []
 
     for datapoint in nodes:
-        costs_manhattan.append(abs(nodes[i].x - datapoint.x) + abs(nodes[i].y - datapoint.y) + abs(
-            nodes[i].z - datapoint.z))
+        costs_manhattan.append(abs(nodes[i].x - datapoint.x) + abs(nodes[i].y - datapoint.y))
 
     totalCosts_manhattan.append(costs_manhattan)
 
 with open(path + 'costs_manhattan.csv', 'w') as f:
-    # using csv.writer method from CSV package
     write = csv.writer(f)
 
     head = [0]
@@ -62,13 +56,11 @@ for i in range(len(nodes)):
 
     for datapoint in nodes:
         costs_euclidean.append(
-            round(math.sqrt((nodes[i].x - datapoint.x) ** 2 + (nodes[i].y - datapoint.y) ** 2 + (
-                    nodes[i].z - datapoint.z) ** 2), 2))
+            round(math.sqrt((nodes[i].x - datapoint.x) ** 2 + (nodes[i].y - datapoint.y) ** 2), 2))
 
     totalCosts_euclidean.append(costs_euclidean)
 
 with open(path + 'costs_euclidean.csv', 'w') as f:
-    # using csv.writer method from CSV package
     write = csv.writer(f)
 
     head = [0]
