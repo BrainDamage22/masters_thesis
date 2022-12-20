@@ -1,12 +1,12 @@
-# Create X random vertices with w dimensions
+# Create X random vertices with 2 dimensions
 import csv
 import random
 from Classes import Node
 import math
 
-amount = 50
-rangeX = 1000
-rangeY = 1000
+amount = 15
+rangeX = 100
+rangeY = 100
 path = '/Users/lukas/Documents/Master Thesis/'
 
 fields = ["Number", "X", "Y"]
@@ -16,6 +16,9 @@ for i in range(1, amount + 1):
     randX = random.randrange(1, rangeX)
     randY = random.randrange(1, rangeY)
     nodes.append(Node(i, randX, randY))
+
+
+random.shuffle(nodes)
 
 with open(path + 'nodes.csv', 'w') as f:
     write = csv.writer(f)

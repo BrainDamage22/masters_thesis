@@ -1,62 +1,48 @@
-from Classes import Node
-import pandas as pd
-import csv
+def find_x_nearest_neighbours(arr, amount):
+    sorted_arr = sorted(arr)
+    lowest_indices = [i for i, val in enumerate(arr) if val in sorted_arr[0:amount]]
+    return lowest_indices
 
-path = '/Users/lukas/Documents/Master Thesis/'
-startingNode = 1
 
-nodes_csv = pd.read_csv(path + 'nodes.csv', sep=',')
-costs_csv = pd.read_csv(path + 'costs_euclidean.csv', sep=',')
-costs_csv = costs_csv.iloc[:, 1:]
+def find_nearest_neighbours_path(nodes, costsList, startingNode):
+    costs = 0
+    visited = [startingNode]
+    route_of_costs = []
+    current_node_number = startingNode
+    not_visited = list(range(0, len(nodes)))
 
-costsList = []
-for ind in costs_csv.index:
-    costsList.append(costs_csv.iloc[ind].to_numpy())
+    while True:
+        not_visited.remove(current_node_number)
 
-nodes = []
-for ind in nodes_csv.index:
-    temp = Node(nodes_csv['Number'][ind], nodes_csv['X'][ind], nodes_csv['Y'][ind])
-    nodes.append(temp)
+        if len(not_visited) == 0:
 
-costs = 0
-visited = [startingNode]
-routeOfCosts = []
-currentNodeNumber = startingNode
-notVisited = list(range(1, len(nodes)))
+            last_costs = costsList[current_node_number - 1][startingNode - 1]
+            costs += last_costs
+            route_of_costs.append(last_costs)
+            visited.append(startingNode)
 
-while True:
+            print("Total costs: " + str(round(costs, 2)))
+            print("Route:")
+            print(visited)
+            print("Costs:")
+            print(route_of_costs)
 
-    notVisited.remove(currentNodeNumber)
+            # with open(path + 'nearest_neighbor.csv', 'w') as f:
+            #     write = csv.writer(f)
+            #     write.writerow(visited)
+            #     write.writerow([costs])
+            break
 
-    if len(notVisited) == 0:
+        possible_destinations = {"Number": [], "Cost": []}
+        current_node_costs = costsList[current_node_number - 1]
 
-        lastCosts = costsList[currentNodeNumber - 1][startingNode - 1]
-        costs += lastCosts
-        routeOfCosts.append(lastCosts)
-        visited.append(startingNode)
+        for node in not_visited:
+            possible_destinations["Number"].append(node)
+            possible_destinations["Cost"].append(current_node_costs[node - 1])
 
-        print("Total costs: " + str(round(costs, 2)))
-        print("Route:")
-        print(visited)
-        print("Costs:")
-        print(routeOfCosts)
-
-        with open(path + 'nearest_neighbor.csv', 'w') as f:
-            write = csv.writer(f)
-            write.writerow(visited)
-            write.writerow([costs])
-        break
-
-    possibleDestinations = {"Number": [], "Cost": []}
-    currentNodeCosts = costsList[currentNodeNumber - 1]
-
-    for node in notVisited:
-        possibleDestinations["Number"].append(node)
-        possibleDestinations["Cost"].append(currentNodeCosts[node - 1])
-
-    minCosts = min(possibleDestinations["Cost"])
-    minCostIndex = possibleDestinations["Cost"].index(minCosts)
-    currentNodeNumber = possibleDestinations["Number"][minCostIndex]
-    costs += minCosts
-    visited.append(currentNodeNumber)
-    routeOfCosts.append(minCosts)
+        min_costs = min(possible_destinations["Cost"])
+        min_cost_index = possible_destinations["Cost"].index(min_costs)
+        current_node_number = possible_destinations["Number"][min_cost_index]
+        costs += min_costs
+        visited.append(current_node_number)
+        route_of_costs.append(min_costs)
