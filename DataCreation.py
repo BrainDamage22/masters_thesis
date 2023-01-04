@@ -4,19 +4,18 @@ import random
 from Classes import Node
 import math
 
-amount = 15
-rangeX = 100
-rangeY = 100
+amount = 10
+rangeX = 20
+rangeY = 20
 path = '/Users/lukas/Documents/Master Thesis/'
 
 fields = ["Number", "X", "Y"]
 nodes = []
 
-for i in range(1, amount + 1):
+for i in range(0, amount):
     randX = random.randrange(1, rangeX)
     randY = random.randrange(1, rangeY)
     nodes.append(Node(i, randX, randY))
-
 
 random.shuffle(nodes)
 
