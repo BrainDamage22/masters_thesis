@@ -1,10 +1,8 @@
 import csv
 import os
 import time
-
 import pandas as pd
-
-from classes import Node, NodeWithNeighbours
+from classes import Node, NodeWithNeighbors
 from nearest_neighbor import find_x_nearest_neighbours
 
 
@@ -29,8 +27,8 @@ def calculate_n_sets(costsList, nodes, delta1):
     node_objects = []
     for node in nodes:
         node_objects.append(
-            NodeWithNeighbours(node.number, node.x, node.y,
-                               find_x_nearest_neighbours(costsList[node.number - 1], delta1)))
+            NodeWithNeighbors(node.number, node.x, node.y,
+                              find_x_nearest_neighbours(costsList[node.number - 1], delta1)))
     return node_objects
 
 
@@ -69,9 +67,9 @@ def print_exceeded(best_route, min_value):
     print("Costs :", str(min_value))
 
 
-def save_results(path, results):
-    filename = "result-" + time.strftime("%d%m%Y-%H%M%S") + ".csv"
-    path = path + "results"
+def save_dng_results(path, results):
+    filename = "dng_result.csv"
+    path = path + "results/dng-result-" + time.strftime("%d%m%Y-%H%M%S")
 
     if not os.path.isdir(path):
         os.makedirs(path)
@@ -79,9 +77,63 @@ def save_results(path, results):
     with open(path + "/" + filename + "", 'w') as f:
         write = csv.writer(f)
 
-        fields = ["best route", "min cost", "sub tours", "cardinality", "delta1", "delta2", "exceeded"]
+        fields = ["best route", "min cost", "sub tours", "cardinality", "delta1", "delta2", "exceeded", "time"]
         write.writerow(fields)
         for result in results:
             write.writerow(
-                [result.best_route, result.min_cost, result.sub_tours, result.cardinality, result.delta1, result.delta2,
-                 result.exceeded])
+                [result.best_route, result.min_cost, result.sub_tours, result.cardinality, result.final_delta1,
+                 result.delta2, result.exceeded, result.time])
+
+
+def save_dng_test_results(path, results, number):
+    filename = "dng_test_result-"
+
+    if not os.path.isdir(path):
+        os.makedirs(path)
+
+    with open(path + "/" + filename + number + ".csv", 'w') as f:
+        write = csv.writer(f)
+
+        fields = ["elementary", "best route", "min cost", "sub tours", "iterations", "cardinality", "delta2",
+                  "start_delta1", "final_delta1",
+                  "exceeded", "time"]
+        write.writerow(fields)
+
+        for result in results:
+            write.writerow(
+                [result.elementary, result.best_route, result.min_cost, result.sub_tours, result.iterations,
+                 result.cardinality, result.delta2, result.start_delta1, result.final_delta1,
+                 result.exceeded, result.time])
+
+
+def save_ng_result(path, result):
+    filename = "ng_result.csv"
+    path = path + "results/ng-result-" + time.strftime("%d%m%Y-%H%M%S")
+
+    if not os.path.isdir(path):
+        os.makedirs(path)
+
+    with open(path + "/" + filename + "", 'w') as f:
+        write = csv.writer(f)
+
+        fields = ["best route", "min cost", "delta1", "elementary", "time"]
+        write.writerow(fields)
+        write.writerow([result.best_route, result.min_value, result.delta1, result.elementary, result.time])
+
+
+def save_ng_test_results(path, results, number):
+    filename = "ng_test_result-"
+
+    if not os.path.isdir(path):
+        os.makedirs(path)
+
+    with open(path + "/" + filename + number + ".csv", 'w') as f:
+        write = csv.writer(f)
+
+        fields = ["best route", "min cost", "delta1", "elementary", "cardinality", "time"]
+        write.writerow(fields)
+
+        for result in results:
+            write.writerow(
+                [result.best_route, result.min_value, result.delta1, result.elementary, result.cardinality,
+                 result.time])
