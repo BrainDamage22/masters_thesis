@@ -1,4 +1,5 @@
-from util import find_loops, calculate_route_costs, print_exceeded
+from util import find_loops, calculate_route_costs, print_exceeded, save_results
+from classes import IterationResult
 
 
 def ng_routing(startingNode, nodeObjects, allNodes, ngSetI, n, costsList):
@@ -30,8 +31,10 @@ def ng_routing(startingNode, nodeObjects, allNodes, ngSetI, n, costsList):
         return all_ng_routes
 
 
-def dynamic_ng_pathing(startingNode, nodeObjects, allNodes, ngSetI, n, delta2, costsList):
+def dynamic_ng_pathing(startingNode, nodeObjects, allNodes, ngSetI, n, delta2, costsList, path):
     i = 0
+    results = []
+    max_delta1 = 0
 
     while True:
         i += 1
@@ -40,12 +43,18 @@ def dynamic_ng_pathing(startingNode, nodeObjects, allNodes, ngSetI, n, delta2, c
         best_route = all_ng_routes[min_value]
         loops = find_loops(best_route)
 
+        for node in nodeObjects:
+            if len(node.neighbours) > max_delta1:
+                max_delta1 = len(node.neighbours)
+
         if len(loops) == 0:
             print("")
             print("Best Route in iteration: " + str(i))
             print(best_route)
             print("Costs :", str(min_value))
-            print("Cardinality of State Space Graph: ", str(len(all_ng_routes)))
+            result = IterationResult(best_route, min_value, loops, len(all_ng_routes), max_delta1, delta2, False)
+            results.append(result)
+            save_results(path, results)
             break
 
         print("")
@@ -54,12 +63,18 @@ def dynamic_ng_pathing(startingNode, nodeObjects, allNodes, ngSetI, n, delta2, c
         print("Costs :", str(min_value))
         print("Sub Routes:")
         print(loops)
+        result = IterationResult(best_route, min_value, loops, len(all_ng_routes), max_delta1, delta2, False)
+        results.append(result)
+
         loop_with_smallest_cardinality = min(loops, key=len)
         start_and_ending_node = loop_with_smallest_cardinality[0]
         loop_with_smallest_cardinality = loop_with_smallest_cardinality[1:-1]
 
         if len(loop_with_smallest_cardinality) >= delta2:
             print_exceeded(best_route, min_value)
+            result = IterationResult(best_route, min_value, loops, len(all_ng_routes), max_delta1, delta2, True)
+            results.append(result)
+            save_results(path, results)
             return
 
         for node in nodeObjects:
@@ -69,4 +84,8 @@ def dynamic_ng_pathing(startingNode, nodeObjects, allNodes, ngSetI, n, delta2, c
                         node.neighbours.append(start_and_ending_node)
                     else:
                         print_exceeded(best_route, min_value)
+                        result = IterationResult(best_route, min_value, loops, len(all_ng_routes), max_delta1, delta2,
+                                                 True)
+                        results.append(result)
+                        save_results(path, results)
                         return

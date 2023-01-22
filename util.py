@@ -1,4 +1,9 @@
+import csv
+import os
+import time
+
 import pandas as pd
+
 from classes import Node, NodeWithNeighbours
 from nearest_neighbor import find_x_nearest_neighbours
 
@@ -24,7 +29,8 @@ def calculate_n_sets(costsList, nodes, delta1):
     node_objects = []
     for node in nodes:
         node_objects.append(
-            NodeWithNeighbours(node.number, node.x, node.y, find_x_nearest_neighbours(costsList[node.number - 1], delta1)))
+            NodeWithNeighbours(node.number, node.x, node.y,
+                               find_x_nearest_neighbours(costsList[node.number - 1], delta1)))
     return node_objects
 
 
@@ -37,7 +43,7 @@ def find_loops(arr):
         # If the current element has already been seen, add the loop to the list of loops.
         if elem in indices:
             start_index = indices[elem]
-            loop = arr[start_index:i+1]
+            loop = arr[start_index:i + 1]
             if len(loop) != len(arr):
                 loops.append(loop)
 
@@ -61,3 +67,21 @@ def print_exceeded(best_route, min_value):
     print("Best Route:")
     print(best_route)
     print("Costs :", str(min_value))
+
+
+def save_results(path, results):
+    filename = "result-" + time.strftime("%d%m%Y-%H%M%S") + ".csv"
+    path = path + "results"
+
+    if not os.path.isdir(path):
+        os.makedirs(path)
+
+    with open(path + "/" + filename + "", 'w') as f:
+        write = csv.writer(f)
+
+        fields = ["best route", "min cost", "sub tours", "cardinality", "delta1", "delta2", "exceeded"]
+        write.writerow(fields)
+        for result in results:
+            write.writerow(
+                [result.best_route, result.min_cost, result.sub_tours, result.cardinality, result.delta1, result.delta2,
+                 result.exceeded])
