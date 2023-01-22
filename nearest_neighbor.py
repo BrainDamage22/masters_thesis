@@ -9,14 +9,14 @@ def find_nearest_neighbours_path(nodes, costsList, startingNode):
     visited = [startingNode]
     route_of_costs = []
     current_node_number = startingNode
-    not_visited = list(range(0, len(nodes)))
+    not_visited = list(range(0, len(nodes)-1))
 
     while True:
         not_visited.remove(current_node_number)
 
         if len(not_visited) == 0:
 
-            last_costs = costsList[current_node_number - 1][startingNode - 1]
+            last_costs = costsList[current_node_number][startingNode]
             costs += last_costs
             route_of_costs.append(last_costs)
             visited.append(startingNode)
@@ -26,11 +26,6 @@ def find_nearest_neighbours_path(nodes, costsList, startingNode):
             print(visited)
             print("Costs:")
             print(route_of_costs)
-
-            # with open(path + 'nearest_neighbor.csv', 'w') as f:
-            #     write = csv.writer(f)
-            #     write.writerow(visited)
-            #     write.writerow([costs])
             break
 
         possible_destinations = {"Number": [], "Cost": []}
