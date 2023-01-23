@@ -14,15 +14,11 @@ def create_data(amount, rangeX, rangeY, path):
         rand_y = random.randrange(1, rangeY)
         nodes.append(Node(i, rand_x, rand_y))
 
-    random.shuffle(nodes)
-
     with open(path + 'nodes.csv', 'w') as f:
         write = csv.writer(f)
         write.writerow(fields)
         for datapoint in nodes:
             write.writerow([datapoint.number, datapoint.x, datapoint.y])
-
-    print("Data generation done")
 
     total_costs_manhattan = []
     total_costs_euclidean = []
@@ -48,8 +44,6 @@ def create_data(amount, rangeX, rangeY, path):
             total_costs_manhattan[i].insert(0, i + 1)
             write.writerow(total_costs_manhattan[i])
 
-    print("Cost computation Manhattan done")
-
     for i in range(len(nodes)):
         costs_euclidean = []
 
@@ -72,4 +66,4 @@ def create_data(amount, rangeX, rangeY, path):
             total_costs_euclidean[i].insert(0, i + 1)
             write.writerow(total_costs_euclidean[i])
 
-    print("Cost computation Euclidean done")
+    print("Data generation done")
