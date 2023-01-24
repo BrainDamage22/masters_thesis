@@ -5,8 +5,8 @@ from routing import dynamic_ng_pathing, ng_routing
 
 def test_delta1_for_ng_routing(path, amount, range_x, range_y, starting_node, iterations):
     for i in range(0, iterations):
-        create_data(amount, range_x, range_y, path)
-        costs_list, nodes = read_data(path)
+        create_data(amount, range_x, range_y, path + "temp/")
+        costs_list, nodes = read_data(path + "temp/")
 
         to_visit = list(range(0, len(nodes)))
         to_visit.remove(starting_node)
@@ -24,8 +24,8 @@ def test_delta1_for_ng_routing(path, amount, range_x, range_y, starting_node, it
 
 def test_delta1_and_delta2_for_dng_pathing(path, amount, range_x, range_y, starting_node, iterations):
     for i in range(0, iterations):
-        create_data(amount, range_x, range_y, path)
-        costs_list, nodes = read_data(path)
+        create_data(amount, range_x, range_y, path + "temp/")
+        costs_list, nodes = read_data(path + "temp/")
 
         to_visit = list(range(0, len(nodes)))
         to_visit.remove(starting_node)

@@ -2,7 +2,7 @@ import csv
 import os
 import glob
 import pandas as pd
-from classes import Node, NodeWithNeighbors, NgResult, DngResult
+from classes import Node, NodeWithNeighbors, NgResult, DngResult, SortOption
 from nearest_neighbor import find_x_nearest_neighbours
 from ast import literal_eval
 
@@ -26,9 +26,9 @@ def read_data(path):
 
 def read_ng_data(path):
     data_csv = pd.read_csv(path + '/results/ng_result/ng_result.csv')
-    temp = NgResult(data_csv['best_route'].apply(literal_eval).item(), data_csv['min_cost'].item(),
+    temp = NgResult(data_csv['best_route'].apply(literal_eval).item(), data_csv['cost'].item(),
                     data_csv['elementary'].item(), data_csv['delta1'].item(), data_csv['cardinality'].item(),
-                    data_csv['time'].item())
+                    data_csv['time'].item(), data_csv['ng_iterations'].item())
     return temp
 
 
@@ -41,10 +41,10 @@ def read_ng_test_data(path):
         data_csv = pd.read_csv(file)
         test_results = []
         for ind in data_csv.index:
-            temp = NgResult(data_csv['best_route'].apply(literal_eval)[ind], data_csv['min_cost'][ind].item(),
+            temp = NgResult(data_csv['best_route'].apply(literal_eval)[ind], data_csv['cost'][ind].item(),
                             data_csv['elementary'][ind].item(), data_csv['delta1'][ind].item(),
                             data_csv['cardinality'][ind].item(),
-                            data_csv['time'][ind].item())
+                            data_csv['time'][ind].item(), data_csv['ng_iterations'][ind].item())
             test_results.append(temp)
         results.append(test_results)
 
@@ -56,10 +56,13 @@ def read_dng_data(path):
 
     results = []
     for ind in data_csv.index:
-        temp = DngResult(data_csv["best_route"].apply(literal_eval)[ind], data_csv["min_cost"][ind].item(), data_csv["sub_tours"].apply(literal_eval)[ind],
+        temp = DngResult(data_csv["best_route"].apply(literal_eval)[ind], data_csv["cost"][ind].item(),
+                         data_csv["sub_tours"].apply(literal_eval)[ind],
                          data_csv["cardinality"][ind].item(), data_csv["start_delta1"][ind].item(),
-                         data_csv["final_delta1"][ind].item(), data_csv["delta2"][ind].item(), data_csv["exceeded"][ind].item(),
-                         data_csv["elementary"][ind].item(), data_csv["iterations"][ind].item(), data_csv["time"][ind].item())
+                         data_csv["final_delta1"][ind].item(), data_csv["delta2"][ind].item(),
+                         data_csv["exceeded"][ind].item(),
+                         data_csv["elementary"][ind].item(), data_csv["iterations"][ind].item(),
+                         data_csv["time"][ind].item(), data_csv['ng_iterations'][ind].item())
         results.append(temp)
 
     return results
@@ -74,13 +77,13 @@ def read_dng_test_data(path):
         data_csv = pd.read_csv(file)
         test_results = []
         for ind in data_csv.index:
-            temp = DngResult(data_csv["best_route"].apply(literal_eval)[ind], data_csv["min_cost"][ind].item(),
+            temp = DngResult(data_csv["best_route"].apply(literal_eval)[ind], data_csv["cost"][ind].item(),
                              data_csv["sub_tours"].apply(literal_eval)[ind],
                              data_csv["cardinality"][ind].item(), data_csv["start_delta1"][ind].item(),
                              data_csv["final_delta1"][ind].item(), data_csv["delta2"][ind].item(),
                              data_csv["exceeded"][ind].item(),
                              data_csv["elementary"][ind].item(), data_csv["iterations"][ind].item(),
-                             data_csv["time"][ind].item())
+                             data_csv["time"][ind].item(), data_csv['ng_iterations'][ind].item())
             test_results.append(temp)
         results.append(test_results)
 
@@ -123,12 +126,12 @@ def calculate_route_costs(route, costsList):
     return round(costs, 2)
 
 
-def print_exceeded(best_route, min_value):
+def print_exceeded(best_route, cost):
     print('')
     print('Delta 2 exceeded')
     print('best_route:')
     print(best_route)
-    print('Costs :', str(min_value))
+    print('Costs :', str(cost))
 
 
 def save_dng_results(path, results):
@@ -141,14 +144,14 @@ def save_dng_results(path, results):
     with open(path + '/' + filename + '', 'w') as f:
         write = csv.writer(f)
 
-        fields = ['elementary', 'best_route', 'min_cost', 'sub_tours', 'iterations', 'cardinality', 'delta2',
-                  'start_delta1', 'final_delta1', 'exceeded', 'time']
+        fields = ['elementary', 'best_route', 'cost', 'sub_tours', 'iterations', 'cardinality', 'delta2',
+                  'start_delta1', 'final_delta1', 'exceeded', 'time', "ng_iterations"]
         write.writerow(fields)
         for result in results:
             write.writerow(
-                [result.elementary, result.best_route, result.min_cost, result.sub_tours, result.iterations,
+                [result.elementary, result.best_route, result.cost, result.sub_tours, result.iterations,
                  result.cardinality, result.delta2, result.start_delta1, result.final_delta1,
-                 result.exceeded, result.time])
+                 result.exceeded, result.time, result.ng_iterations])
 
 
 def save_dng_test_results(path, results, number):
@@ -161,15 +164,15 @@ def save_dng_test_results(path, results, number):
     with open(path + '/' + filename + number + '.csv', 'w') as f:
         write = csv.writer(f)
 
-        fields = ['elementary', 'best_route', 'min_cost', 'sub_tours', 'iterations', 'cardinality', 'delta2',
-                  'start_delta1', 'final_delta1', 'exceeded', 'time']
+        fields = ['elementary', 'best_route', 'cost', 'sub_tours', 'iterations', 'cardinality', 'delta2',
+                  'start_delta1', 'final_delta1', 'exceeded', 'time', "ng_iterations"]
         write.writerow(fields)
 
         for result in results:
             write.writerow(
-                [result.elementary, result.best_route, result.min_cost, result.sub_tours, result.iterations,
+                [result.elementary, result.best_route, result.cost, result.sub_tours, result.iterations,
                  result.cardinality, result.delta2, result.start_delta1, result.final_delta1,
-                 result.exceeded, result.time])
+                 result.exceeded, result.time, result.ng_iterations])
 
 
 def save_ng_result(path, result):
@@ -182,10 +185,11 @@ def save_ng_result(path, result):
     with open(path + '/' + filename + '', 'w') as f:
         write = csv.writer(f)
 
-        fields = ['best_route', 'min_cost', 'elementary', 'delta1', 'cardinality', 'time']
+        fields = ['best_route', 'cost', 'elementary', 'delta1', 'cardinality', 'time', "ng_iterations"]
         write.writerow(fields)
         write.writerow(
-            [result.best_route, result.min_value, result.elementary, result.delta1, result.cardinality, result.time])
+            [result.best_route, result.cost, result.elementary, result.delta1, result.cardinality, result.time,
+             result.ng_iterations])
 
 
 def save_ng_test_results(path, results, number):
@@ -198,10 +202,72 @@ def save_ng_test_results(path, results, number):
     with open(path + '/' + filename + number + '.csv', 'w') as f:
         write = csv.writer(f)
 
-        fields = ['best_route', 'min_cost', 'elementary', 'delta1', 'cardinality', 'time']
+        fields = ['best_route', 'cost', 'elementary', 'delta1', 'cardinality', 'time', "ng_iterations"]
         write.writerow(fields)
 
         for result in results:
             write.writerow(
-                [result.best_route, result.min_value, result.elementary, result.delta1, result.cardinality,
-                 result.time])
+                [result.best_route, result.cost, result.elementary, result.delta1, result.cardinality,
+                 result.time, result.ng_iterations])
+
+
+def group_data_by(to_group, sort_option):
+    if sort_option == SortOption.delta2:
+        max_delta2 = max(item.delta2 for item in to_group)
+        return_list = []
+        for k in range(0, max_delta2):
+            return_list.append([])
+            for item in to_group:
+                if k + 1 == item.delta2:
+                    return_list[k].append(item)
+        return return_list
+
+    if sort_option == SortOption.start_delta1:
+        max_start_delta1 = max(item.start_delta1 for item in to_group)
+        return_list = []
+        for k in range(0, max_start_delta1):
+            return_list.append([])
+            for item in to_group:
+                if k + 1 == item.start_delta1:
+                    return_list[k].append(item)
+        return return_list
+
+    if sort_option == SortOption.final_delta1:
+        max_final_delta1 = max(item.final_delta1 for item in to_group)
+        return_list = []
+        for k in range(0, max_final_delta1):
+            return_list.append([])
+            for item in to_group:
+                if k + 1 == item.final_delta1:
+                    return_list[k].append(item)
+        return return_list
+
+    if sort_option == SortOption.elementary:
+        elem = []
+        not_elem = []
+        for item in to_group:
+            if item.elementary:
+                elem.append(item)
+            else:
+                not_elem.append(item)
+        return elem, not_elem
+
+    if sort_option == SortOption.exceeded:
+        elem = []
+        not_elem = []
+        for item in to_group:
+            if item.exceeded:
+                elem.append(item)
+            else:
+                not_elem.append(item)
+        return elem, not_elem
+
+    if sort_option == SortOption.iterations:
+        max_iterations = max(item.iterations for item in to_group)
+        return_list = []
+        for k in range(1, max_iterations + 1):
+            return_list.append([])
+            for item in to_group:
+                if k == item.iterations:
+                    return_list[k - 1].append(item)
+        return return_list

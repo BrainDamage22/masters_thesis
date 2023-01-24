@@ -5,6 +5,7 @@ import time
 
 def ng_routing(startingNode, nodeObjects, allNodes, ngSetI, n, costsList):
     start = time.time()
+    possibilities = 0
     all_ng_routes = {}
 
     node_objects = {node.number: node for node in nodeObjects}
@@ -12,6 +13,7 @@ def ng_routing(startingNode, nodeObjects, allNodes, ngSetI, n, costsList):
     stack = [(startingNode, ng_set_i, [])]
 
     while stack:
+        possibilities += 1
         node, ng_set_i, visited = stack.pop()
         node_object = node_objects[node]
         neighbours = set(node_object.neighbors)
@@ -29,9 +31,10 @@ def ng_routing(startingNode, nodeObjects, allNodes, ngSetI, n, costsList):
             continue
 
         stack.extend((node, ng_set_j, visited.copy()) for node in to_visit)
+
     else:
-        min_value = min(all_ng_routes.keys())
-        best_route = all_ng_routes[min_value]
+        cost = min(all_ng_routes.keys())
+        best_route = all_ng_routes[cost]
         loops = find_loops(best_route)
         elementary = False
         cardinality = len(all_ng_routes)
@@ -40,8 +43,8 @@ def ng_routing(startingNode, nodeObjects, allNodes, ngSetI, n, costsList):
             elementary = True
 
         end = time.time()
-        return NgResult(best_route, min_value, elementary, len(nodeObjects[0].neighbors), cardinality,
-                        round(end - start, 3))
+        return NgResult(best_route, cost, elementary, len(nodeObjects[0].neighbors), cardinality,
+                        round(end - start, 3), possibilities)
 
 
 def dynamic_ng_pathing(startingNode, nodeObjects, allNodes, ngSetI, n, delta2, costsList):
@@ -50,11 +53,13 @@ def dynamic_ng_pathing(startingNode, nodeObjects, allNodes, ngSetI, n, delta2, c
     results = []
     start_delta1 = len(nodeObjects[0].neighbors)
     max_delta1 = 0
+    possibilities = 0
 
     while True:
         i += 1
         result = ng_routing(startingNode, nodeObjects, allNodes, ngSetI, n, costsList)
-        min_value = result.min_value
+        possibilities += result.ng_iterations
+        cost = result.cost
         best_route = result.best_route
         loops = find_loops(best_route)
 
@@ -66,9 +71,9 @@ def dynamic_ng_pathing(startingNode, nodeObjects, allNodes, ngSetI, n, delta2, c
             print("")
             print("Best Route in iteration: " + str(i))
             print(best_route)
-            print("Costs :", str(min_value))
+            print("Costs :", str(cost))
             end = time.time()
-            result = DngResult(best_route, min_value, loops, result.cardinality, start_delta1, max_delta1, delta2, False, True, i, round(end - start, 3))
+            result = DngResult(best_route, cost, loops, result.cardinality, start_delta1, max_delta1, delta2, False, True, i, round(end - start, 3), possibilities)
             results.append(result)
 
             return result, results
@@ -76,11 +81,11 @@ def dynamic_ng_pathing(startingNode, nodeObjects, allNodes, ngSetI, n, delta2, c
         print("")
         print(str(i) + ". Iteration")
         print(best_route)
-        print("Costs :", str(min_value))
+        print("Costs :", str(cost))
         print("Sub Routes:")
         print(loops)
         end = time.time()
-        result = DngResult(best_route, min_value, loops, result.cardinality, start_delta1, max_delta1, delta2, False, False, i, round(end - start, 3))
+        result = DngResult(best_route, cost, loops, result.cardinality, start_delta1, max_delta1, delta2, False, False, i, round(end - start, 3), possibilities)
         results.append(result)
 
         loop_with_smallest_cardinality = min(loops, key=len)
@@ -88,9 +93,9 @@ def dynamic_ng_pathing(startingNode, nodeObjects, allNodes, ngSetI, n, delta2, c
         loop_with_smallest_cardinality = loop_with_smallest_cardinality[1:-1]
 
         if len(loop_with_smallest_cardinality) >= delta2:
-            print_exceeded(best_route, min_value)
+            print_exceeded(best_route, cost)
             end = time.time()
-            result = DngResult(best_route, min_value, loops, result.cardinality, start_delta1, max_delta1, delta2, True, False, i, round(end - start, 3))
+            result = DngResult(best_route, cost, loops, result.cardinality, start_delta1, max_delta1, delta2, True, False, i, round(end - start, 3), possibilities)
             return result, results
 
         for node in nodeObjects:
@@ -99,7 +104,7 @@ def dynamic_ng_pathing(startingNode, nodeObjects, allNodes, ngSetI, n, delta2, c
                     if len(node.neighbors) < delta2:
                         node.neighbors.append(start_and_ending_node)
                     else:
-                        print_exceeded(best_route, min_value)
+                        print_exceeded(best_route, cost)
                         end = time.time()
-                        result = DngResult(best_route, min_value, loops, result.cardinality, start_delta1, max_delta1, delta2, True, False, i, round(end - start, 3))
+                        result = DngResult(best_route, cost, loops, result.cardinality, start_delta1, max_delta1, delta2, True, False, i, round(end - start, 3), possibilities)
                         return result, results

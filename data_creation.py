@@ -3,11 +3,15 @@ import csv
 import random
 from classes import Node
 import math
+import os
 
 
 def create_data(amount, rangeX, rangeY, path):
     fields = ["Number", "X", "Y"]
     nodes = []
+
+    if not os.path.isdir(path):
+        os.makedirs(path)
 
     for i in range(0, amount):
         rand_x = random.randrange(1, rangeX)
