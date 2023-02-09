@@ -71,3 +71,6 @@ def create_data(amount, rangeX, rangeY, path):
             write.writerow(total_costs_euclidean[i])
 
     print("Data generation done")
+
+
+

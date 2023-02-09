@@ -5,7 +5,7 @@ import time
 
 def ng_routing_recursion(starting_node, nodeObjects, costs_list):
     start = time.time()
-    possibilities = []
+    possibilities = [0]
 
     all_ng_routes = {}
     node_objects = {node.number: node for node in nodeObjects}
@@ -14,7 +14,7 @@ def ng_routing_recursion(starting_node, nodeObjects, costs_list):
     ng_set_i = set()
 
     def recursion(node, ng_set_before, visited):
-        possibilities.append(1)
+        possibilities[0] += 1
         n = len(node_objects)
         node_object = node_objects[node]
         neighbours = set(node_object.neighbors)
@@ -66,6 +66,7 @@ def ng_routing_iteration(starting_node, nodeObjects, costsList):
         node, ng_set_i, visited = stack.pop()
         node_object = node_objects[node]
         neighbours = set(node_object.neighbors)
+
         ng_set_j = list(set(ng_set_i) & neighbours)
         ng_set_j.append(node)
         ng_set_j = list(set(ng_set_j))
