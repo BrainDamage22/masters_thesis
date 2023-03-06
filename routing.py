@@ -3,101 +3,83 @@ from classes import DngResult, NgResult, NgMode
 import time
 
 
-def ng_routing_recursion(starting_node, nodeObjects, costs_list):
+def ng_routing(starting_node, nodes, costs_list, lower_bound):
     start = time.time()
-    possibilities = [0]
 
-    all_ng_routes = {}
-    node_objects = {node.number: node for node in nodeObjects}
-    all_nodes = list(node_objects.keys())
-    all_nodes.remove(starting_node)
-    ng_set_i = set()
+    def retrace_optimal_path(buffer):
 
-    def recursion(node, ng_set_before, visited):
-        possibilities[0] += 1
-        n = len(node_objects)
-        node_object = node_objects[node]
-        neighbours = set(node_object.neighbors)
-        ng_set_j = list(set(ng_set_before) & neighbours)
-        ng_set_j.append(node)
-        ng_set_j = list(set(ng_set_j))
-        visited.append(node)
-        to_visit = [node for node in all_nodes if node not in ng_set_j]
+        full_path_buffer = dict((k, v) for k, v in buffer.items() if k[2] == n)
+        path_key = min(full_path_buffer.keys(), key=lambda x: full_path_buffer[x][0])
+        curr_node = path_key[0]
+        optimal_cost, prev_node, ng_set_i = buffer[path_key]
 
-        if len(visited) == n:
-            visited.append(visited[0])
-            costs = calculate_route_costs(visited, costs_list)
-            all_ng_routes[costs] = visited
-            return
+        optimal_path = [curr_node, starting_node]
+        k = n
 
-        for node in to_visit:
-            recursion(node, ng_set_j, visited.copy())
+        while prev_node is not None:
+            curr_node = prev_node
+            k -= 1
+            path_key = (curr_node, ng_set_i, k)
+            _, prev_node, ng_set_i = buffer[path_key]
 
-    recursion(starting_node, ng_set_i, [])
+            optimal_path = [curr_node] + optimal_path
+        return optimal_path, optimal_cost
 
-    cost = min(all_ng_routes.keys())
-    best_route = all_ng_routes[cost]
-    loops = find_loops(best_route)
+    all_dp_routes = {}
+    node_objects = {node.number: node for node in nodes}
+    n = len(node_objects)
+    all_nodes = frozenset(list(node_objects.keys()))
+    all_nodes = frozenset(all_nodes) - frozenset([starting_node])
+    ng_set_i = frozenset()
+    k = 1
+    state = (starting_node, ng_set_i, k)
+    all_dp_routes[state] = (0, None, frozenset())
+    queue = [state]
+
+    while queue:
+        current_node, ng_set_i, k = queue.pop(0)
+        prev_cost, _, _ = all_dp_routes[(current_node, ng_set_i, k)]
+        node_object = nodes[current_node]
+
+        neighbours = frozenset(node_object.neighbors)
+        ng_set_j = frozenset.intersection(ng_set_i, neighbours)
+        ng_set_j = frozenset().union(ng_set_j, frozenset([current_node]))
+        k += 1
+
+        to_visit = all_nodes - ng_set_j
+        for new_curr_node in to_visit:
+            new_cost = round((prev_cost + costs_list[current_node][new_curr_node]), 3)
+
+            if new_cost > lower_bound:
+                continue
+            elif (new_curr_node, ng_set_j, k) not in all_dp_routes:
+                all_dp_routes[(new_curr_node, ng_set_j, k)] = (new_cost, current_node, ng_set_i)
+                queue += [(new_curr_node, ng_set_j, k)]
+            elif new_cost < all_dp_routes[(new_curr_node, ng_set_j, k)][0]:
+                all_dp_routes[(new_curr_node, ng_set_j, k)] = (new_cost, current_node, ng_set_i)
+
+    full_path_buffer = dict((k, v) for k, v in all_dp_routes.items() if k[2] == n)
+
+    for key in full_path_buffer.keys():
+        cost, prev_node, ng_set_i = all_dp_routes[key]
+        new_cost = cost + round((costs_list[key[0]][starting_node]), 3)
+        all_dp_routes[key] = (new_cost, prev_node, ng_set_i)
+
+    optimal_path, optimal_cost = retrace_optimal_path(all_dp_routes)
+
+    loops = find_loops(optimal_path)
+    possibilities = len(all_dp_routes)
+
     elementary = False
-    cardinality = len(all_ng_routes)
-
     if len(loops) == 0:
         elementary = True
 
     end = time.time()
-    return NgResult(best_route, cost, elementary, len(nodeObjects[0].neighbors), cardinality,
-                    round(end - start, 3), len(possibilities))
+    return NgResult(optimal_path, round(optimal_cost, 3), elementary, len(node_objects[0].neighbors), 0,
+                    round(end - start, 3), possibilities)
 
 
-def ng_routing_iteration(starting_node, nodeObjects, costsList):
-    start = time.time()
-    possibilities = 0
-
-    all_ng_routes = {}
-    node_objects = {node.number: node for node in nodeObjects}
-    all_nodes = list(node_objects.keys())
-    all_nodes.remove(starting_node)
-    ng_set_i = set()
-    n = len(node_objects)
-    stack = [(starting_node, ng_set_i, [])]
-
-    while stack:
-        possibilities += 1
-        node, ng_set_i, visited = stack.pop()
-        node_object = node_objects[node]
-        neighbours = set(node_object.neighbors)
-
-        ng_set_j = list(set(ng_set_i) & neighbours)
-        ng_set_j.append(node)
-        ng_set_j = list(set(ng_set_j))
-
-        visited.append(node)
-        to_visit = [node for node in all_nodes if node not in ng_set_j]
-
-        if len(visited) == n:
-            visited.append(starting_node)
-            costs = calculate_route_costs(visited, costsList)
-            all_ng_routes[costs] = visited
-            continue
-
-        stack.extend((node, ng_set_j, visited.copy()) for node in to_visit)
-
-    else:
-        cost = min(all_ng_routes.keys())
-        best_route = all_ng_routes[cost]
-        loops = find_loops(best_route)
-        elementary = False
-        cardinality = len(all_ng_routes)
-
-        if len(loops) == 0:
-            elementary = True
-
-        end = time.time()
-        return NgResult(best_route, cost, elementary, len(nodeObjects[0].neighbors), cardinality,
-                        round(end - start, 3), possibilities)
-
-
-def dynamic_ng_pathing(starting_node, nodeObjects, costs_list, delta2, mode):
+def dynamic_ng_pathing(starting_node, nodeObjects, costs_list, delta2, lower_bound):
     start = time.time()
     i = 0
 
@@ -109,10 +91,7 @@ def dynamic_ng_pathing(starting_node, nodeObjects, costs_list, delta2, mode):
     while True:
         i += 1
 
-        if mode == NgMode.iteration:
-            result = ng_routing_iteration(starting_node, nodeObjects, costs_list)
-        else:
-            result = ng_routing_recursion(starting_node, nodeObjects, costs_list)
+        result = ng_routing(starting_node, nodeObjects, costs_list, lower_bound)
 
         possibilities += result.ng_iterations
         cost = result.cost
@@ -132,7 +111,6 @@ def dynamic_ng_pathing(starting_node, nodeObjects, costs_list, delta2, mode):
             result = DngResult(best_route, cost, loops, result.cardinality, start_delta1, max_delta1, delta2, False,
                                True, i, round(end - start, 3), possibilities)
             results.append(result)
-
             return result, results
 
         print("")

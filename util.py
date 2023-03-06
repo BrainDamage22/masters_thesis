@@ -95,7 +95,7 @@ def calculate_n_sets(costsList, nodes, delta1):
     for node in nodes:
         node_objects.append(
             NodeWithNeighbors(node.number, node.x, node.y,
-                              find_x_nearest_neighbours(costsList[node.number - 1], delta1)))
+                              find_x_nearest_neighbours(costsList[node.number], delta1)))
     return node_objects
 
 
