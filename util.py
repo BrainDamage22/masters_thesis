@@ -126,6 +126,16 @@ def calculate_route_costs(route, costsList):
     return round(costs, 2)
 
 
+def calculate_route_costs_dmp(route, costsList):
+    costs = 0
+    n = len(route)
+    k = 0
+    for i in range(len(route) - 1):
+        k += 1
+        costs += (n-k+1) * costsList[route[i]][route[i + 1]]
+    return round(costs, 2)
+
+
 def print_exceeded(best_route, cost):
     print('')
     print('Delta 2 exceeded')

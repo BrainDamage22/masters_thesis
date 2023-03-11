@@ -1,9 +1,9 @@
-from util import find_loops, print_exceeded
-from classes import DngResult, NgResult
+from util import find_loops, calculate_route_costs, print_exceeded
+from classes import DngResult, NgResult, NgMode
 import time
 
 
-def ng_routing(starting_node, nodes, costs_list, upper_bound):
+def ng_routing_test(starting_node, nodes, costs_list, upper_bound):
     start = time.time()
 
     def retrace_optimal_path(buffer):
@@ -52,6 +52,15 @@ def ng_routing(starting_node, nodes, costs_list, upper_bound):
         for new_curr_node in to_visit:
             new_cost = round((prev_cost + ((n-k+2) * costs_list[current_node][new_curr_node])), 3)
 
+            # found_dominating_state = False
+            # for key in all_dp_routes.keys():
+            #     cost, _, _ = all_dp_routes[key]
+            #     if cost < new_cost and key[2] == k and ng_set_j.issubset(key[1]):
+            #         found_dominating_state = True
+            #         break
+            #
+            # if found_dominating_state:
+            #     continue
             if new_cost > upper_bound:
                 continue
             elif (new_curr_node, ng_set_j, k) not in all_dp_routes:
