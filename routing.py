@@ -6,6 +6,13 @@ import time
 def ng_routing(starting_node, nodes, costs_list, upper_bound):
     start = time.time()
 
+    ub_ext = 0
+    lut_ext = 0
+    all_ext = 0
+    lut_up_ext = 0
+    followed_ext = 0
+    oob_ext = 0
+
     def retrace_optimal_path(buffer):
 
         full_path_buffer = dict((k, v) for k, v in buffer.items() if k[2] == n)
@@ -46,19 +53,26 @@ def ng_routing(starting_node, nodes, costs_list, upper_bound):
         k += 1
 
         if k > n:
+            oob_ext += 1
             continue
 
         to_visit = all_nodes - ng_set_j
         for new_curr_node in to_visit:
-            new_cost = round((prev_cost + ((n-k+2) * costs_list[current_node][new_curr_node])), 3)
+            all_ext += 1
+            new_cost = round((prev_cost + ((n - k + 2) * costs_list[current_node][new_curr_node])), 3)
 
             if new_cost > upper_bound:
+                ub_ext += 1
                 continue
             elif (new_curr_node, ng_set_j, k) not in all_dp_routes:
+                followed_ext += 1
                 all_dp_routes[(new_curr_node, ng_set_j, k)] = (new_cost, current_node, ng_set_i)
                 queue += [(new_curr_node, ng_set_j, k)]
             elif new_cost < all_dp_routes[(new_curr_node, ng_set_j, k)][0]:
+                lut_up_ext += 1
                 all_dp_routes[(new_curr_node, ng_set_j, k)] = (new_cost, current_node, ng_set_i)
+            else:
+                lut_ext += 1
 
     full_path_buffer = dict((k, v) for k, v in all_dp_routes.items() if k[2] == n)
 
@@ -69,16 +83,13 @@ def ng_routing(starting_node, nodes, costs_list, upper_bound):
 
     optimal_path, optimal_cost = retrace_optimal_path(all_dp_routes)
 
-    loops = find_loops(optimal_path)
-    possibilities = len(all_dp_routes)
-
     elementary = False
-    if len(loops) == 0:
+    if len(find_loops(optimal_path)) == 0:
         elementary = True
 
     end = time.time()
-    return NgResult(optimal_path, round(optimal_cost, 3), elementary, len(node_objects[0].neighbors), 0,
-                    round(end - start, 3), possibilities)
+    return NgResult(optimal_path, round(optimal_cost, 3), elementary, len(node_objects[0].neighbors),
+                    round(end - start, 3), all_ext, followed_ext, ub_ext, lut_ext, lut_up_ext, oob_ext)
 
 
 def dynamic_ng_pathing(starting_node, nodeObjects, costs_list, delta2, lower_bound):
@@ -88,17 +99,12 @@ def dynamic_ng_pathing(starting_node, nodeObjects, costs_list, delta2, lower_bou
     results = []
     start_delta1 = len(nodeObjects[0].neighbors)
     max_delta1 = 0
-    possibilities = 0
 
     while True:
         i += 1
 
         result = ng_routing(starting_node, nodeObjects, costs_list, lower_bound)
-
-        possibilities += result.ng_iterations
-        cost = result.cost
-        best_route = result.best_route
-        loops = find_loops(best_route)
+        loops = find_loops(result.best_route)
 
         for node in nodeObjects:
             if len(node.neighbors) > max_delta1:
@@ -107,34 +113,33 @@ def dynamic_ng_pathing(starting_node, nodeObjects, costs_list, delta2, lower_bou
         if len(loops) == 0:
             print("")
             print("Best Route in iteration: " + str(i))
-            print(best_route)
-            print("Costs :", str(cost))
+            print(result.best_route)
+            print("Costs :", str(result.cost))
             end = time.time()
-            result = DngResult(best_route, cost, loops, result.cardinality, start_delta1, max_delta1, delta2, False,
-                               True, i, round(end - start, 3), possibilities)
+            result = DngResult(result.best_route, result.cost, len(loops), start_delta1, max_delta1, delta2, False,
+                               True, i, round(end - start, 3), result.all_ext, result.followed_ext, result.ub_ext,
+                               result.lut_ext, result.lut_up_ext, result.oob_ext)
             results.append(result)
             return result, results
 
         print("")
         print(str(i) + ". Iteration")
-        print(best_route)
-        print("Costs :", str(cost))
+        print(result.best_route)
+        print("Costs :", str(result.cost))
         print("Sub Routes:")
         print(loops)
         end = time.time()
-        result = DngResult(best_route, cost, loops, result.cardinality, start_delta1, max_delta1, delta2, False, False,
-                           i, round(end - start, 3), possibilities)
-        results.append(result)
 
         loop_with_smallest_cardinality = min(loops, key=len)
         start_and_ending_node = loop_with_smallest_cardinality[0]
         loop_with_smallest_cardinality = loop_with_smallest_cardinality[1:-1]
 
         if len(loop_with_smallest_cardinality) >= delta2:
-            print_exceeded(best_route, cost)
+            print_exceeded(result.best_route, result.cost)
             end = time.time()
-            result = DngResult(best_route, cost, loops, result.cardinality, start_delta1, max_delta1, delta2, True,
-                               False, i, round(end - start, 3), possibilities)
+            result = DngResult(result.best_route, result.cost, len(loops), start_delta1, max_delta1, delta2, True,
+                               False, i, round(end - start, 3), result.all_ext, result.followed_ext, result.ub_ext,
+                               result.lut_ext, result.lut_up_ext, result.oob_ext)
             return result, results
 
         for node in nodeObjects:
@@ -143,8 +148,15 @@ def dynamic_ng_pathing(starting_node, nodeObjects, costs_list, delta2, lower_bou
                     if len(node.neighbors) < delta2:
                         node.neighbors.append(start_and_ending_node)
                     else:
-                        print_exceeded(best_route, cost)
+                        print_exceeded(result.best_route, result.cost)
                         end = time.time()
-                        result = DngResult(best_route, cost, loops, result.cardinality, start_delta1, max_delta1,
-                                           delta2, True, False, i, round(end - start, 3), possibilities)
+                        result = DngResult(result.best_route, result.cost, len(loops), start_delta1, max_delta1, delta2,
+                                           True, False, i, round(end - start, 3), result.all_ext, result.followed_ext,
+                                           result.ub_ext,
+                                           result.lut_ext, result.lut_up_ext, result.oob_ext)
                         return result, results
+
+        result = DngResult(result.best_route, result.cost, len(loops), start_delta1, max_delta1, delta2, False,
+                           False, i, round(end - start, 3), result.all_ext, result.followed_ext, result.ub_ext,
+                           result.lut_ext, result.lut_up_ext, result.oob_ext)
+        results.append(result)
