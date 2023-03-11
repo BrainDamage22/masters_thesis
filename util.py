@@ -128,12 +128,12 @@ def calculate_route_costs(route, costsList):
 
 def calculate_route_costs_dmp(route, costsList):
     costs = 0
-    n = len(route)
+    n = len(route)-1
     k = 0
     for i in range(len(route) - 1):
         k += 1
         costs += (n-k+1) * costsList[route[i]][route[i + 1]]
-    return round(costs, 2)
+    return costs
 
 
 def print_exceeded(best_route, cost):

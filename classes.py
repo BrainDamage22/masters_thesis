@@ -50,7 +50,3 @@ class SortOption(Enum):
     exceeded = 5
     iterations = 6
 
-
-class NgMode(Enum):
-    recursion = 1
-    iteration = 2
