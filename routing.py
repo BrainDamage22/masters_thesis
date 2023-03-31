@@ -89,10 +89,10 @@ def ng_routing(starting_node, nodes, costs_list, upper_bound):
 
     end = time.time()
     return NgResult(optimal_path, round(optimal_cost, 3), elementary, len(node_objects[0].neighbors),
-                    round(end - start, 3), all_ext, followed_ext, ub_ext, lut_ext, lut_up_ext, oob_ext)
+                    round(end - start, 3), all_ext, followed_ext, ub_ext, lut_ext, lut_up_ext, oob_ext, len(full_path_buffer))
 
 
-def dynamic_ng_pathing(starting_node, nodeObjects, costs_list, delta2, lower_bound):
+def dynamic_ng_pathing(starting_node, nodeObjects, costs_list, delta2, upper_bound):
     start = time.time()
     i = 0
 
@@ -103,7 +103,7 @@ def dynamic_ng_pathing(starting_node, nodeObjects, costs_list, delta2, lower_bou
     while True:
         i += 1
 
-        result = ng_routing(starting_node, nodeObjects, costs_list, lower_bound)
+        result = ng_routing(starting_node, nodeObjects, costs_list, upper_bound)
         loops = find_loops(result.best_route)
 
         for node in nodeObjects:
@@ -118,7 +118,7 @@ def dynamic_ng_pathing(starting_node, nodeObjects, costs_list, delta2, lower_bou
             end = time.time()
             result = DngResult(result.best_route, result.cost, len(loops), start_delta1, max_delta1, delta2, False,
                                True, i, round(end - start, 3), result.all_ext, result.followed_ext, result.ub_ext,
-                               result.lut_ext, result.lut_up_ext, result.oob_ext)
+                               result.lut_ext, result.lut_up_ext, result.oob_ext, result.feasible_solutions)
             results.append(result)
             return result, results
 
@@ -139,7 +139,7 @@ def dynamic_ng_pathing(starting_node, nodeObjects, costs_list, delta2, lower_bou
             end = time.time()
             result = DngResult(result.best_route, result.cost, len(loops), start_delta1, max_delta1, delta2, True,
                                False, i, round(end - start, 3), result.all_ext, result.followed_ext, result.ub_ext,
-                               result.lut_ext, result.lut_up_ext, result.oob_ext)
+                               result.lut_ext, result.lut_up_ext, result.oob_ext, result.feasible_solutions)
             return result, results
 
         for node in nodeObjects:
@@ -153,10 +153,57 @@ def dynamic_ng_pathing(starting_node, nodeObjects, costs_list, delta2, lower_bou
                         result = DngResult(result.best_route, result.cost, len(loops), start_delta1, max_delta1, delta2,
                                            True, False, i, round(end - start, 3), result.all_ext, result.followed_ext,
                                            result.ub_ext,
-                                           result.lut_ext, result.lut_up_ext, result.oob_ext)
+                                           result.lut_ext, result.lut_up_ext, result.oob_ext, result.feasible_solutions)
                         return result, results
 
         result = DngResult(result.best_route, result.cost, len(loops), start_delta1, max_delta1, delta2, False,
                            False, i, round(end - start, 3), result.all_ext, result.followed_ext, result.ub_ext,
-                           result.lut_ext, result.lut_up_ext, result.oob_ext)
+                           result.lut_ext, result.lut_up_ext, result.oob_ext, result.feasible_solutions)
         results.append(result)
+
+
+def ng_routing_depr(starting_node, node_objects, costsList):
+    start = time.time()
+    all_ext = 0
+
+    all_feasible_ng_routes = {}
+    node_objects = {node.number: node for node in node_objects}
+    all_nodes = list(node_objects.keys())
+    all_nodes.remove(starting_node)
+    ng_set_i = frozenset()
+    n = len(node_objects)
+    stack = [(starting_node, ng_set_i, [], 0.0)]
+
+    while stack:
+        all_ext += 1
+        node, ng_set_i, visited, costs = stack.pop()
+        node_object = node_objects[node]
+
+        neighbours = frozenset(node_object.neighbors)
+        ng_set_j = frozenset.intersection(ng_set_i, neighbours)
+        ng_set_j = frozenset().union(ng_set_j, frozenset([node]))
+
+        visited.append(node)
+        to_visit = [node for node in all_nodes if node not in ng_set_j]
+
+        if len(visited) == n:
+            new_cost = costs + costsList[visited[len(visited) - 1]][starting_node]
+            visited.append(starting_node)
+            all_feasible_ng_routes[new_cost] = visited
+            continue
+
+        for node in to_visit:
+            new_cost = costs + (n - len(visited)) + 1 * costsList[visited[len(visited) - 1]][node]
+            stack += [(node, ng_set_j, visited.copy(), new_cost)]
+
+    else:
+        cost = min(all_feasible_ng_routes.keys())
+        best_route = all_feasible_ng_routes[cost]
+        loops = find_loops(best_route)
+
+        elementary = False
+        if len(loops) == 0:
+            elementary = True
+
+        end = time.time()
+        return NgResult(best_route, cost, elementary, len(node_objects[0].neighbors), round(end - start, 3), all_ext, 0, 0, 0, 0, 0, len(all_feasible_ng_routes))
