@@ -155,7 +155,7 @@ def read_dng_test_data(path):
                 data_csv['ub_ext'][ind].item(),
                 data_csv['lut_ext'][ind].item(),
                 data_csv['lut_up_ext'][ind].item(),
-                data_csv['aob_ext'][ind].item(),
+                data_csv['oob_ext'][ind].item(),
                 data_csv['feasible_solutions'][ind].item()
             )
             test_results.append(temp)
@@ -350,7 +350,7 @@ def save_ng_test_results(path, results, number):
 
         # Define the header row and write it to the file.
         fields = ['best_route', 'cost', 'elementary', 'delta1', 'time', "all_ext", "followed_ext", "ub_ext", "lut_ext",
-                  "lut_up_ext", 'aob_ext', 'feasible_solutions']
+                  "lut_up_ext", 'oob_ext', 'feasible_solutions']
         write.writerow(fields)
 
         # Iterate through the results and write each result as a row in the CSV file.
@@ -367,31 +367,31 @@ def group_data_by(to_group, sort_option):
     if sort_option == SortOption.delta2:
         max_delta2 = max(item.delta2 for item in to_group)
         return_list = []
-        for k in range(0, max_delta2):
+        for k in range(1, max_delta2):
             return_list.append([])
             for item in to_group:
                 if k + 1 == item.delta2:
-                    return_list[k].append(item)
+                    return_list[k-1].append(item)
         return return_list
 
     elif sort_option == SortOption.start_delta1:
         max_start_delta1 = max(item.start_delta1 for item in to_group)
         return_list = []
-        for k in range(0, max_start_delta1):
+        for k in range(1, max_start_delta1):
             return_list.append([])
             for item in to_group:
                 if k + 1 == item.start_delta1:
-                    return_list[k].append(item)
+                    return_list[k-1].append(item)
         return return_list
 
     elif sort_option == SortOption.final_delta1:
         max_final_delta1 = max(item.final_delta1 for item in to_group)
         return_list = []
-        for k in range(0, max_final_delta1):
+        for k in range(1, max_final_delta1-1):
             return_list.append([])
             for item in to_group:
                 if k + 1 == item.final_delta1:
-                    return_list[k].append(item)
+                    return_list[k-1].append(item)
         return return_list
 
     elif sort_option == SortOption.elementary:
